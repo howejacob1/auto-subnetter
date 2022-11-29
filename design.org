@@ -1,0 +1,8 @@
+** allocate current_ip = 192.168.0.0/16 into various subnets.
+*** get list of all nodes 
+*** for each node, from the highest to the lowest:
+**** find next power of 2 that fits
+**** say that we're at like 192.168.0.12/31
+**** normally, what would we do? We would start at that, and then reduce the amount of subnet bits until putting it with this IP gives us an unused one that has a large enough thingie
+**** So what, just enter in the IP address and subnet. Then, we allow people to edit nodes. They can edit it so that a node has more or less people. Or, a node has no network. Additionally, they can add new nodes by clicking on one node and then clicking on another. 
+**** We *must* get this done. So, 
