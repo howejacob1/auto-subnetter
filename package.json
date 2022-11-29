@@ -1,5 +1,10 @@
 {
   "dependencies": {
-    "ipaddr.js": "^2.0.1"
-  }
+    "ipaddr.js": "^2.0.1",
+    "watchify": "^4.0.0"
+  },
+    "scripts": {
+	"build": "browserify force.js -o static/bundle.js",
+	"watch": "watchify force.js -o static/bundle.js --debug --verbose"
+    }
 }

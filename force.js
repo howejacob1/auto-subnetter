@@ -69,6 +69,10 @@ function is_empty(list) {
     return list.length === 0
 }
 
+var ipaddr = require("ipaddr.js")
+
+console.log(ipaddr)
+
 // maybe have it be like this. Have available networks.
 // then we can divide it by two.
 // Always divide until we get to the smallest one before we
