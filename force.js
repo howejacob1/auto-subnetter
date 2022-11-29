@@ -58,7 +58,7 @@ function do_init_nodes(json) {
   links = json.links;
   update();
   force = force
-    .nodes(nodes)
+	.nodes(nodes)
 	.links(links);
     console.log("started")
   force.start();
