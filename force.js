@@ -50,16 +50,20 @@ svg.append("svg:defs").selectAll("marker")
 linesg = svg.append("g");
 circlesg = svg.append("g");
 
-d3.json("./bob.json", function(json) {
-  // decorate a node with a count of its children
+initial_json = {"nodes":[{"name":"Myriel","group":1},{"name":"Napoleon","group":1},{"name":"Mlle.Baptistine","group":1},{"name":"Mme.Magloire","group":1},{"name":"CountessdeLo","group":1},{"name":"Geborand","group":1},{"name":"Champtercier","group":1},{"name":"Cravatte","group":1},{"name":"Count","group":1},{"name":"OldMan","group":1}],"links":[{"source":0,"target":1,"value":1},{"source":1,"target":2,"value":8},{"source":1,"target":3,"value":10},{"source":3,"target":4,"value":1},{"source":3,"target":5,"value":1},{"source":4,"target":6,"value":1},{"source":6,"target":7,"value":1},{"source":1,"target":4,"value":2},{"source":7,"target":8,"value":1},{"source":8,"target":9,"value":1},{"source":1,"target":9,"value":1},{"source":3,"target":9,"value":1}]}
+
+function do_init_nodes(json) {
+    // decorate a node with a count of its children
   nodes = json.nodes;
   links = json.links;
   update();
   force = force
     .nodes(nodes)
-    .links(links);
+	.links(links);
+    console.log("started")
   force.start();
-});
+}
+do_init_nodes(initial_json);
 
 
 function update() {
