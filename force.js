@@ -65,6 +65,34 @@ function do_init_nodes(json) {
 }
 do_init_nodes(initial_json);
 
+function is_empty(list) {
+    return list.length === 0
+}
+
+// maybe have it be like this. Have available networks.
+// then we can divide it by two.
+// Always divide until we get to the smallest one before we
+// run out. I think that's pretty good. 
+function allocate_ips(starting_ip, starting_ip_subnet_mask, num_hosts_list) {
+    networks_available = [{ip: starting_ip,
+			   subnet_mask: starting_ip_subnet_mask}]
+    allocated_networks = []
+    while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
+	subnet_size = num_hosts_list.pop() + 2 // add broadcast/network address
+	// first find the next largest power of two that fits.
+	// so, log_2()
+	target_subnet_size = Math.pow(2, Math.ceil(Math.log2(subnet_size)))
+	console.log("subnet_size: " + subnet_size + "target_subnet_size: " + target_subnet_size)
+    }
+    if (is_empty(networks_available) && !is_empty(num_hosts_list)) {
+	console.log("not enough networks available")
+    }
+    return allocated_networks
+}
+
+function allocate_ip_test() {
+    allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100])
+}
 
 function update() {
   var link = linesg.selectAll("line.link")
