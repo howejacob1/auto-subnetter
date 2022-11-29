@@ -60,7 +60,7 @@ function do_init_nodes(json) {
   force = force
 	.nodes(nodes)
 	.links(links);
-    console.log("started")
+  console.log("started")
   force.start();
 }
 do_init_nodes(initial_json);
