@@ -76,10 +76,16 @@ console.log(ipaddr)
 // maybe have it be like this. Have available networks.
 // then we can divide it by two.
 // Always divide until we get to the smallest one before we
-// run out. I think that's pretty good. 
-function allocate_ips(starting_ip, starting_ip_subnet_mask, num_hosts_list) {
+// run out. I think that's pretty good.
+
+// 
+
+// function split_ip(starting_ip, subnet_mask)
+
+// function 
+function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     networks_available = [{ip: starting_ip,
-			   subnet_mask: starting_ip_subnet_mask}]
+			   subnet_bits: subnet_bits}]
     allocated_networks = []
     while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
 	subnet_size = num_hosts_list.pop() + 2 // add broadcast/network address
