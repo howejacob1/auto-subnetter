@@ -88,11 +88,11 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
 			   subnet_bits: subnet_bits}]
     allocated_networks = []
     while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
-	subnet_size = num_hosts_list.pop() + 2 // add broadcast/network address
+	subnet_num_ips = num_hosts_list.pop() + 2 // add broadcast/network address
 	// first find the next largest power of two that fits.
 	// so, log_2()
-	target_subnet_size = Math.pow(2, Math.ceil(Math.log2(subnet_size)))
-	console.log("subnet_size: " + subnet_size + "target_subnet_size: " + target_subnet_size)
+	target_subnet_size = Math.pow(2, Math.ceil(Math.log2(subnet_num_ips)))
+	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size)
     }
     if (is_empty(networks_available) && !is_empty(num_hosts_list)) {
 	console.log("not enough networks available")
