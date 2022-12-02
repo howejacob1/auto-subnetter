@@ -1,3 +1,9 @@
+
+/// requires
+var ipaddr = require("ipaddr.js")
+
+
+/// force graph initialization stuff
 var width = 960,
     height = 500,
     selected_node, selected_target_node,
@@ -65,22 +71,14 @@ function do_init_nodes(json) {
 }
 do_init_nodes(initial_json);
 
+
+/// utils
 function is_empty(list) {
     return list.length === 0
 }
 
-var ipaddr = require("ipaddr.js")
-
-console.log(ipaddr)
-
-// maybe have it be like this. Have available networks.
-// then we can divide it by two.
-// Always divide until we get to the smallest one before we
-// run out. I think that's pretty good.
-
-// 
-
-// function split_ip(starting_ip, subnet_mask)
+
+/// ip conversion utils
 
 function str_ip_to_int_ip(str_ip) {
     let as_byte_array = ipaddr.parse(str_ip).toByteArray();
@@ -99,7 +97,6 @@ function str_ip_to_int_ip_test() {
 }
 
 // network byte order (big endian)
-
 function int_ip_to_byte_array(int_ip, num_bytes) {
     let byte_array = new Array(num_bytes);
     let index = 0;
@@ -110,12 +107,11 @@ function int_ip_to_byte_array(int_ip, num_bytes) {
     return byte_array;
 }
 
-
-
 function int_ip_to_byte_array_test() {
     return int_ip_to_byte_array(str_ip_to_int_ip("192.168.0.1"), 4)
 }
 
+// TODO: remove console.log
 function int_ip_to_str_ip(int_ip) {
     console.log("the byte array is " + int_ip_to_byte_array(int_ip, 4))
     return ipaddr.fromByteArray(int_ip_to_byte_array(int_ip, 4)).toString();
@@ -137,6 +133,9 @@ function half_subnetspec(subnetspec) {
     return [first_subnet, second_subnet];
 }
 
+
+/// main program functions
+
 // function 
 function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     networks_available = [{ip: starting_ip,
@@ -155,7 +154,7 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     }
     return allocated_networks
 }
-
+// TODO: rename
 function allocate_ip_test() {
     console.log(allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100]))
     console.log("as byte array: " + int_ip_to_byte_array_test())
@@ -166,6 +165,9 @@ function allocate_ip_test() {
 }
 
 global.allocate_ip_test = allocate_ip_test
+
+
+/// force graph updating functions
 
 function update() {
   var link = linesg.selectAll("line.link")
@@ -213,6 +215,9 @@ function update() {
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
 }
+
+
+/// force graph user input
 
 // select target node for new node connection
 function node_mouseover(d) {
