@@ -82,6 +82,61 @@ console.log(ipaddr)
 
 // function split_ip(starting_ip, subnet_mask)
 
+function str_ip_to_int_ip(str_ip) {
+    let as_byte_array = ipaddr.parse(str_ip).toByteArray();
+    console.log("byte array: " + as_byte_array)
+    let as_int = 0;
+    let multiplier = 1;
+    for (index = as_byte_array.length-1; index >= 0; index--) {
+	as_int += multiplier*as_byte_array[index];
+	multiplier *= 256;
+    }
+    return as_int;
+}
+
+function str_ip_to_int_ip_test() {
+    return str_ip_to_int_ip("192.168.0.1");
+}
+
+// network byte order (big endian)
+
+function int_ip_to_byte_array(int_ip, num_bytes) {
+    let byte_array = new Array(num_bytes);
+    let index = 0;
+    for (index = 0; index < num_bytes; index++) {
+	byte_array[num_bytes - 1 - index] = int_ip & 255;
+	int_ip >>= 8;
+    }
+    return byte_array;
+}
+
+
+
+function int_ip_to_byte_array_test() {
+    return int_ip_to_byte_array(str_ip_to_int_ip("192.168.0.1"), 4)
+}
+
+function int_ip_to_str_ip(int_ip) {
+    console.log("the byte array is " + int_ip_to_byte_array(int_ip, 4))
+    return ipaddr.fromByteArray(int_ip_to_byte_array(int_ip, 4)).toString();
+}
+
+function int_ip_to_str_ip_test() {
+    return int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1"), 4)
+}
+
+// now go through all the available subnets
+// subnetspec: {ip_int: ip_as_int}
+// returns two subnets,
+function half_subnetspec(subnetspec) {
+    subnet_bits = subnetspec.subnet_bits-1;
+    first_subnet = {ip: subnetspec.ip,
+		    subnet_bits: subnet_bits};
+    second_subnet = {ip: subnetspec.ip + Math.pow(2, 32-subnet_bits),
+		     subnet_bits: subnet_bits};
+    return [first_subnet, second_subnet];
+}
+
 // function 
 function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     networks_available = [{ip: starting_ip,
@@ -93,6 +148,7 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
 	// so, log_2()
 	target_subnet_size = Math.pow(2, Math.ceil(Math.log2(subnet_num_ips)))
 	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size)
+	// now find the next largest IP subnet that fits
     }
     if (is_empty(networks_available) && !is_empty(num_hosts_list)) {
 	console.log("not enough networks available")
@@ -101,8 +157,15 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
 }
 
 function allocate_ip_test() {
-    allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100])
+    console.log(allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100]))
+    console.log("as byte array: " + int_ip_to_byte_array_test())
+    console.log("as int: " + str_ip_to_int_ip_test())
+    console.log("here")
+    console.log("as str: " + int_ip_to_str_ip_test())
+    console.log("str->int->str: " + int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1")))
 }
+
+global.allocate_ip_test = allocate_ip_test
 
 function update() {
   var link = linesg.selectAll("line.link")
