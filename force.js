@@ -1,6 +1,6 @@
 
 /// requires
-var ipaddr = require("ipaddr.js")
+var ipaddr = require("ipaddr.js");
 
 
 /// force graph initialization stuff
@@ -56,7 +56,7 @@ svg.append("svg:defs").selectAll("marker")
 linesg = svg.append("g");
 circlesg = svg.append("g");
 
-initial_json = {"nodes":[{"name":"Myriel","group":1},{"name":"Napoleon","group":1},{"name":"Mlle.Baptistine","group":1},{"name":"Mme.Magloire","group":1},{"name":"CountessdeLo","group":1},{"name":"Geborand","group":1},{"name":"Champtercier","group":1},{"name":"Cravatte","group":1},{"name":"Count","group":1},{"name":"OldMan","group":1}],"links":[{"source":0,"target":1,"value":1},{"source":1,"target":2,"value":8},{"source":1,"target":3,"value":10},{"source":3,"target":4,"value":1},{"source":3,"target":5,"value":1},{"source":4,"target":6,"value":1},{"source":6,"target":7,"value":1},{"source":1,"target":4,"value":2},{"source":7,"target":8,"value":1},{"source":8,"target":9,"value":1},{"source":1,"target":9,"value":1},{"source":3,"target":9,"value":1}]}
+initial_json = {"nodes":[{"name":"Myriel","group":1},{"name":"Napoleon","group":1},{"name":"Mlle.Baptistine","group":1},{"name":"Mme.Magloire","group":1},{"name":"CountessdeLo","group":1},{"name":"Geborand","group":1},{"name":"Champtercier","group":1},{"name":"Cravatte","group":1},{"name":"Count","group":1},{"name":"OldMan","group":1}],"links":[{"source":0,"target":1,"value":1},{"source":1,"target":2,"value":8},{"source":1,"target":3,"value":10},{"source":3,"target":4,"value":1},{"source":3,"target":5,"value":1},{"source":4,"target":6,"value":1},{"source":6,"target":7,"value":1},{"source":1,"target":4,"value":2},{"source":7,"target":8,"value":1},{"source":8,"target":9,"value":1},{"source":1,"target":9,"value":1},{"source":3,"target":9,"value":1}]};
 
 function do_init_nodes(json) {
     // decorate a node with a count of its children
@@ -66,7 +66,7 @@ function do_init_nodes(json) {
   force = force
 	.nodes(nodes)
 	.links(links);
-  console.log("started")
+    console.log("started");
   force.start();
 }
 do_init_nodes(initial_json);
@@ -74,7 +74,11 @@ do_init_nodes(initial_json);
 
 /// utils
 function is_empty(list) {
-    return list.length === 0
+    return list.length === 0;
+}
+
+function is_undefined(thing) {
+    return typeof thing === "undefined";
 }
 
 
@@ -82,7 +86,7 @@ function is_empty(list) {
 
 function str_ip_to_int_ip(str_ip) {
     let as_byte_array = ipaddr.parse(str_ip).toByteArray();
-    console.log("byte array: " + as_byte_array)
+    console.log("byte array: " + as_byte_array);
     let as_int = 0;
     let multiplier = 1;
     for (index = as_byte_array.length-1; index >= 0; index--) {
@@ -108,17 +112,17 @@ function int_ip_to_byte_array(int_ip, num_bytes) {
 }
 
 function int_ip_to_byte_array_test() {
-    return int_ip_to_byte_array(str_ip_to_int_ip("192.168.0.1"), 4)
+    return int_ip_to_byte_array(str_ip_to_int_ip("192.168.0.1"), 4);
 }
 
 // TODO: remove console.log
 function int_ip_to_str_ip(int_ip) {
-    console.log("the byte array is " + int_ip_to_byte_array(int_ip, 4))
+    console.log("the byte array is " + int_ip_to_byte_array(int_ip, 4));
     return ipaddr.fromByteArray(int_ip_to_byte_array(int_ip, 4)).toString();
 }
 
 function int_ip_to_str_ip_test() {
-    return int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1"), 4)
+    return int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1"), 4);
 }
 
 // now go through all the available subnets
@@ -137,35 +141,100 @@ function half_subnetspec(subnetspec) {
 
 /// main program functions
 
-// function 
+function find_closest_network(candidate_networks, target_subnet_bits) {
+    let results = {};
+    for (let index = 0; index < candidate_networks.length; index++) {
+	let candidate = allocated_networks[index];
+	if (candidate.subnet_bits == target_subnet_bits) {
+	    results.closest_network = candidate;
+	    results.index_to_delete = index;
+	    break;
+	}
+	if (candidate.subnet_bits > target_subnet_bits) {
+	    if (is_undefined(closest_network) ||
+		(candidate.subnet_bits < closest_network.subnet_bits)) {
+		results.closest_network = candidate;
+		results.index = index;
+	    }
+	}
+    }
+    return results;
+}
+
 function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
-    networks_available = [{ip: starting_ip,
-			   subnet_bits: subnet_bits}]
-    allocated_networks = []
-    while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
-	subnet_num_ips = num_hosts_list.pop() + 2 // add broadcast/network address
-	// first find the next largest power of two that fits.
-	// so, log_2()
-	target_subnet_size = Math.pow(2, Math.ceil(Math.log2(subnet_num_ips)))
-	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size)
-	// now find the next largest IP subnet that fits
+    let allocated_networks = [{ip: starting_ip,
+			       subnet_bits: subnet_bits}];
+    // we're going to have an array of descriptions of what happened
+    // so like if num_hosts_list is [100 150 39]
+    // we make an array [{num_hosts: 100, index: 0}]
+    let num_hosts_sorted_info = new Array(num_hosts_list.length);
+    for (let index = 0; index < num_hosts_list.length; index++) {
+	num_hosts_sorted_info[index]
+	    = {"num_hosts": num_hosts_list[index], "index": index};
     }
-    if (is_empty(networks_available) && !is_empty(num_hosts_list)) {
-	console.log("not enough networks available")
-    }
-    return allocated_networks
+    num_hosts_sorted_info.sort((function (num_hosts_info_1, num_hosts_info_2) {
+	return num_hosts_info_1.num_hosts > num_hosts_info_2.num_hosts;
+    }));
+
+    console.log(num_hosts_sorted_info);
+    // // we will make a list [1 0 2] for the order in which to process the host indexs
+    // // 
+    
+    // while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
+    // 	let subnet_num_ips = num_hosts_list.pop() + 2; // add broadcast/network address
+    // 	// first find the next largest power of two that fits.
+    // 	let target_subnet_bits = Math.ceil(Math.log2(subnet_num_ips));
+    // 	let target_subnet_num_ips = Math.pow(2, target_subnet_bits);
+    // 	// to find the subnet we'd like out of all available subnets easily,
+    // 	// I first remove all networks below our size
+    // 	let network_chosen = false;
+    // 	let target_network;
+    // 	let target_network_index;
+    // 	let results;
+    // 	while (!network_chosen) {
+    // 	    results = find_closest_network(allocated_networks, target_subnet_bits);
+    // 	    target_network = results.closest_subnet;
+    // 	    target_network_index = results.index;
+	    
+    // 	    // this means that there is not even a valid close network.
+    // 	    if (is_undefined(target_network)) {
+    // 		return false;
+    // 	    }
+
+    // 	    if (target_network.subnet_bits == target_subnet_bits) {
+    // 		delete allocated_networks[target_network_index];
+    // 		network_chosen = true;
+    // 		break;
+    // 	    } else { // when subnet_bits is more than target subnet bits
+    // 		// this network is too large. We have to divide it. 
+    // 		delete allocated_networks[index];
+    // 		allocated_networks.concat(half_subnetspec(target_network));
+    // 	    }
+    // 	}
+    // 	// target_network must be defined here, already checked
+    // 	// now we have the network we're going to use. add it to the 
+    // 	delete allocated_networks[target_network_index]
+	
+	
+    // 	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size);
+    // 	// now find the next largest IP subnet that fits
+    // }
+    // if (is_empty(networks_available) && !is_empty(num_hosts_list)) {
+    // 	console.log("not enough networks available");
+    // }
+    // return allocated_networks;
 }
 // TODO: rename
 function allocate_ip_test() {
-    console.log(allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100]))
-    console.log("as byte array: " + int_ip_to_byte_array_test())
-    console.log("as int: " + str_ip_to_int_ip_test())
-    console.log("here")
-    console.log("as str: " + int_ip_to_str_ip_test())
-    console.log("str->int->str: " + int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1")))
+    console.log(allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100]));
+    // console.log("as byte array: " + int_ip_to_byte_array_test());
+    // console.log("as int: " + str_ip_to_int_ip_test());
+    // console.log("here");
+    // console.log("as str: " + int_ip_to_str_ip_test());
+    // console.log("str->int->str: " + int_ip_to_str_ip(str_ip_to_int_ip("192.168.0.1")));
 }
 
-global.allocate_ip_test = allocate_ip_test
+global.allocate_ip_test = allocate_ip_test;
 
 
 /// force graph updating functions
