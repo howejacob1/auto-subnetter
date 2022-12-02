@@ -133,6 +133,7 @@ function half_subnetspec(subnetspec) {
     return [first_subnet, second_subnet];
 }
 
+// 
 
 /// main program functions
 
