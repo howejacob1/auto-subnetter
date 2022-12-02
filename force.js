@@ -85,12 +85,11 @@ function is_undefined(thing) {
 /// ip conversion utils
 
 function str_ip_to_int_ip(str_ip) {
-    let as_byte_array = ipaddr.parse(str_ip).toByteArray();
-    console.log("byte array: " + as_byte_array);
+    let other_as_byte_array = ipaddr.parse(str_ip).toByteArray();
     let as_int = 0;
     let multiplier = 1;
-    for (index = as_byte_array.length-1; index >= 0; index--) {
-	as_int += multiplier*as_byte_array[index];
+    for (index = other_as_byte_array.length-1; index >= 0; index--) {
+	as_int += multiplier*other_as_byte_array[index];
 	multiplier *= 256;
     }
     return as_int;
@@ -102,13 +101,19 @@ function str_ip_to_int_ip_test() {
 
 // network byte order (big endian)
 function int_ip_to_byte_array(int_ip, num_bytes) {
-    let byte_array = new Array(num_bytes);
-    let index = 0;
-    for (index = 0; index < num_bytes; index++) {
-	byte_array[num_bytes - 1 - index] = int_ip & 255;
-	int_ip >>= 8;
+    console.log("input IP is " + int_ip);
+    let the_byte_array = [];
+    for (let index = 0; index < num_bytes; index++) {
+	the_byte_array.push(0);
     }
-    return byte_array;
+    console.log("byte array before execution: " + JSON.stringify(the_byte_array));
+    for (let index = 0; index < num_bytes; index++) {
+	the_byte_array[num_bytes - 1 - index] = int_ip & 255;
+	int_ip = int_ip >>> 8;
+	console.log("new int_ip: " + int_ip);
+    }
+    console.log("resulting byte array is " + JSON.stringify(the_byte_array));
+    return JSON.parse(JSON.stringify(the_byte_array));
 }
 
 function int_ip_to_byte_array_test() {
@@ -117,7 +122,6 @@ function int_ip_to_byte_array_test() {
 
 // TODO: remove console.log
 function int_ip_to_str_ip(int_ip) {
-    console.log("the byte array is " + int_ip_to_byte_array(int_ip, 4));
     return ipaddr.fromByteArray(int_ip_to_byte_array(int_ip, 4)).toString();
 }
 
@@ -130,9 +134,9 @@ function int_ip_to_str_ip_test() {
 // returns two subnets,
 function half_subnetspec(subnetspec) {
     subnet_bits = subnetspec.subnet_bits-1;
-    first_subnet = {ip: subnetspec.ip,
+    first_subnet = {int_ip: subnetspec.int_ip,
 		    subnet_bits: subnet_bits};
-    second_subnet = {ip: subnetspec.ip + Math.pow(2, 32-subnet_bits),
+    second_subnet = {int_ip: subnetspec.int_ip + Math.pow(2, 32-subnet_bits),
 		     subnet_bits: subnet_bits};
     return [first_subnet, second_subnet];
 }
@@ -144,15 +148,18 @@ function half_subnetspec(subnetspec) {
 function find_closest_network(candidate_networks, target_subnet_bits) {
     let results = {};
     for (let index = 0; index < candidate_networks.length; index++) {
-	let candidate = allocated_networks[index];
+	let candidate = candidate_networks[index];
+	if (candidate == null) {
+	    continue;
+	}
 	if (candidate.subnet_bits == target_subnet_bits) {
 	    results.closest_network = candidate;
 	    results.index_to_delete = index;
 	    break;
 	}
 	if (candidate.subnet_bits > target_subnet_bits) {
-	    if (is_undefined(closest_network) ||
-		(candidate.subnet_bits < closest_network.subnet_bits)) {
+	    if (is_undefined(results.closest_network) ||
+		(candidate.subnet_bits < results.closest_network.subnet_bits)) {
 		results.closest_network = candidate;
 		results.index = index;
 	    }
@@ -161,9 +168,11 @@ function find_closest_network(candidate_networks, target_subnet_bits) {
     return results;
 }
 
-function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
-    let allocated_networks = [{ip: starting_ip,
-			       subnet_bits: subnet_bits}];
+function allocate_ips(starting_int_ip, subnet_bits, num_hosts_list) {
+    let starting_network = {};
+    starting_network.int_ip = starting_int_ip;
+    starting_network.subnet_bits = subnet_bits;
+    let allocated_networks = [starting_network];
     // we're going to have an array of descriptions of what happened
     // so like if num_hosts_list is [100 150 39]
     // we make an array [{num_hosts: 100, index: 0}]
@@ -180,42 +189,54 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     // // we will make a list [1 0 2] for the order in which to process the host indexs
     // // 
     
-    // while ((num_hosts_list.length !== 0) && (networks_available.length !== 0)) {
-    // 	let subnet_num_ips = num_hosts_list.pop() + 2; // add broadcast/network address
-    // 	// first find the next largest power of two that fits.
-    // 	let target_subnet_bits = Math.ceil(Math.log2(subnet_num_ips));
-    // 	let target_subnet_num_ips = Math.pow(2, target_subnet_bits);
-    // 	// to find the subnet we'd like out of all available subnets easily,
-    // 	// I first remove all networks below our size
-    // 	let network_chosen = false;
-    // 	let target_network;
-    // 	let target_network_index;
-    // 	let results;
-    // 	while (!network_chosen) {
-    // 	    results = find_closest_network(allocated_networks, target_subnet_bits);
-    // 	    target_network = results.closest_subnet;
-    // 	    target_network_index = results.index;
+    for (let index = 0; index < num_hosts_sorted_info.length; index++) {
+	let num_hosts_info = num_hosts_sorted_info[index];
+	let subnet_num_ips = num_hosts_list.pop() + 2; // add broadcast/network address
+	// first find the next largest power of two that fits.
+	let target_subnet_bits = Math.ceil(Math.log2(subnet_num_ips));
+	let target_subnet_num_ips = Math.pow(2, target_subnet_bits);
+	// to find the subnet we'd like out of all available subnets easily,
+	// I first remove all networks below our size
+	let network_chosen = false;
+	let target_network;
+	let target_network_index;
+	let results;
+	while (!network_chosen) {
+	    console.log("allocated networks: " + JSON.stringify(allocated_networks));
+	    console.log("target_subnet_bits: " + target_subnet_bits);
+	    results = find_closest_network(allocated_networks, target_subnet_bits);
+	    target_network = results.closest_network;
+	    target_network_index = results.index;
+	    console.log("target_network: " + JSON.stringify(target_network));
+	    console.log("target_network_index: " + target_network_index);
+	    // this means that there is not even a valid close network.
+	    if (is_undefined(target_network)) {
+		return false;
+	    }
 	    
-    // 	    // this means that there is not even a valid close network.
-    // 	    if (is_undefined(target_network)) {
-    // 		return false;
-    // 	    }
+	    if (target_network.subnet_bits == target_subnet_bits) {
+		delete allocated_networks[target_network_index];
+		network_chosen = true;
+		break;
+	    } else { // when subnet_bits is more than target subnet bits
+		// this network is too large. We have to divide it. 
+		delete allocated_networks[index];
+		allocated_networks = allocated_networks.concat(half_subnetspec(target_network));
+		console.log(JSON.stringify(allocated_networks));
+	    }
+	}
+	// target_network must be defined here, already checked
+	// now we have the network we're going to use. add it to the
+	num_hosts_info.target_network = target_network;
+	delete allocated_networks[target_network_index];
+    }
+    console.log(num_hosts_sorted_info);	
 
-    // 	    if (target_network.subnet_bits == target_subnet_bits) {
-    // 		delete allocated_networks[target_network_index];
-    // 		network_chosen = true;
-    // 		break;
-    // 	    } else { // when subnet_bits is more than target subnet bits
-    // 		// this network is too large. We have to divide it. 
-    // 		delete allocated_networks[index];
-    // 		allocated_networks.concat(half_subnetspec(target_network));
-    // 	    }
-    // 	}
-    // 	// target_network must be defined here, already checked
-    // 	// now we have the network we're going to use. add it to the 
-    // 	delete allocated_networks[target_network_index]
-	
-	
+    for (let index = 0; index < num_hosts_sorted_info.length; index++) {
+	let num_hosts_info = num_hosts_sorted_info[index];
+	str_ip = int_ip_to_str_ip(num_hosts_info.target_network.int_ip);
+	console.log("allocated " + num_hosts_info.target_network.int_ip + " " + str_ip + " for " + num_hosts_info.num_hosts + " hosts at index " + num_hosts_info.index + ".");
+    }
     // 	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size);
     // 	// now find the next largest IP subnet that fits
     // }
@@ -224,9 +245,18 @@ function allocate_ips(starting_ip, subnet_bits, num_hosts_list) {
     // }
     // return allocated_networks;
 }
+
 // TODO: rename
 function allocate_ip_test() {
-    console.log(allocate_ips("192.168.1.0", "255.255.255.0", [63, 62, 100]));
+    let int_ip = str_ip_to_int_ip("192.168.1.0");
+    
+    console.log("as integer: " + int_ip);
+    console.log("192.168.1.0");
+    console.log(int_ip_to_str_ip(int_ip + 256));
+    console.log("192.168.1.0 as byte array: " + JSON.stringify(int_ip_to_byte_array(int_ip, 4)));
+    console.log("192.168.1.0 + 256 as byte array: " + JSON.stringify(int_ip_to_byte_array(int_ip + 256, 4)));
+    // console.log(allocate_ips(int_ip, 24, [63, 62, 100]));
+    console.log()
     // console.log("as byte array: " + int_ip_to_byte_array_test());
     // console.log("as int: " + str_ip_to_int_ip_test());
     // console.log("here");
