@@ -2,6 +2,11 @@
 def main():
     ip = input("Enter in the provided IP range. Example: 192.168.0.0/24: ")
     print(ip)
+    print("Enter in a list containing numbers of hosts.")
+    print("Seperate using any delimiter. Examples: 323-232 100,20")
+    num_hosts_list_raw = input("> ")
+    # read one integer at a time until a non-integer is encountered. Then, end this integer, add it to the list
+    print(num_hosts_list_raw)
 
 if __name__ == "__main__":
     main()
