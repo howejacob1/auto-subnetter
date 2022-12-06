@@ -13,8 +13,8 @@ def main():
         elif cur_num_raw != "":
             num_hosts_list.append(int(cur_num_raw))
             cur_num_raw = ""
-    
 
+    num_hosts_list.sort(reverse=True)
     # read one integer at a time until a non-integer is encountered. Then, end this integer, add it to the list
     print(num_hosts_list)
 
