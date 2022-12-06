@@ -266,6 +266,15 @@ function allocate_ips(starting_int_ip, network_bits, num_hosts_list) {
 	str_ip = int_ip_to_str_ip(num_hosts_info.target_network.int_ip);
 	console.log("allocated " + num_hosts_info.target_network.int_ip + " " + str_ip + "/" + num_hosts_info.target_network.network_bits + " for " + num_hosts_info.num_hosts + " hosts at index " + num_hosts_info.index + ".");
     }
+
+
+    // desired finish program:
+    // press "h" to edit number of hosts
+    // press "t" to toggle subnetting for that node
+    // click to add a node
+    // click drag on a node to connect to other node or to make a new node
+    // 
+    // needs to have 
     // 	console.log("subnet_num_ips: " + subnet_num_ips + "target_subnet_size: " + target_subnet_size);
     // 	// now find the next largest IP subnet that fits
     // }
@@ -348,12 +357,15 @@ function update() {
 
 /// force graph user input
 
+let hover_node;
+
 // select target node for new node connection
 function node_mouseover(d) {
-  if (drawing_line && d !== selected_node) {
-    // highlight and select target node
-    selected_target_node = d;
-  }
+    if (drawing_line && d !== selected_node) {
+	// highlight and select target node
+	selected_target_node = d;
+    }
+    hover_node = d;
 }
 
 function node_mouseout(d) {
@@ -443,11 +455,16 @@ function mouseup() {
 
 function keyup() {
   switch (d3.event.keyCode) {
-    case 16: { // shift
+  case 16: { // shift
       should_drag = false;
       update();
       force.start();
     }
+  case 72: { // h
+      prompt();
+      update();
+      force.start();
+  }
   }
 }
 
