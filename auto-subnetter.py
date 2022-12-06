@@ -1,7 +1,12 @@
 #!/usr/bin/python3
+import ipaddress
+
 def main():
-    # ip = input("Enter in the provided IP range. Example: 192.168.0.0/24: ")
-    # print(ip)
+    ip_raw = input("Enter in the provided IP range. Example: 192.168.0.0/24: ")
+    ip = ipaddress.ip_network(ip_raw)
+    print(ip.subnets())
+    for subnet in ip.subnets():
+        print(f"subnet is {subnet} type is {type(subnet)}")
     print("Enter in a list containing numbers of hosts.")
     print("Seperate using any delimiter. Examples: 323-232 100,20")
     num_hosts_list_raw = input("> ") + " " # hack: put delim at end to make code work
@@ -15,6 +20,7 @@ def main():
             cur_num_raw = ""
 
     num_hosts_list.sort(reverse=True)
+    # now we need to convert an IP to a list of bytes, then add 
     # read one integer at a time until a non-integer is encountered. Then, end this integer, add it to the list
     print(num_hosts_list)
 
