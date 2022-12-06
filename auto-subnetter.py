@@ -6,7 +6,7 @@ BITS_IN_IP = 32
 def main():
     ip_raw = input("Enter in the provided IP range. Example: 192.168.0.0/24: ")
     ip = ipaddress.ip_network(ip_raw)
-    unallocated_networks = [ip]
+    
     print("Enter in a list containing numbers of hosts.")
     print("Seperate using any delimiter. Examples: 323-232 100,20")
     num_hosts_list_raw = input("> ") + " " # hack: put delim at end to make code work
@@ -24,13 +24,44 @@ def main():
     # now we need to convert an IP to a list of bytes, then add 
     # read one integer at a time until a non-integer is encountered. Then, end this integer, add it to the list
     print(num_hosts_list)
+    unallocated_networks = [ip]
     network_assignments = []
     for num_hosts in num_hosts_list:
         num_required_ips = num_hosts + 2 # broadcast * network addresses
         subnet_bits_required = ceil(log2(num_required_ips))
         network_bits = 32 - subnet_bits_required
         print(f"{num_hosts} hosts needs {subnet_bits_required} subnet bits or /{network_bits}")
-        
+        # now find closest subnet
+        # find highest one that can fit
+        network_found = False
+        best_network = None
+        while not network_found:
+            for network in unallocated_networks:
+                print(f"currently working on network {network} and is type {type(network)}")
+                if network.prefixlen == network_bits:
+                    network_assignments.append({"num_hosts": num_hosts, "network": network})
+                    unallocated_networks.remove(network)
+                    network_found = True
+                    break
+                elif network.prefixlen < network_bits: # network too big, must divide
+                    if best_network is None:
+                        best_network = network
+                    elif best_network.prefixlen < network.prefixlen:
+                        best_network = network
+            if not network_found:
+                if best_network is None:
+                    raise BaseException(f"couldn't find a network to fit {num_hosts} hosts")
+                # now we have a network that is too large. Divide it by two, redo the loop.
+                else:
+                    index = unallocated_networks.index(best_network)
+                    unallocated_networks.pop(index)
+                    for subnet in best_network.subnets():
+                        unallocated_networks.insert(index, subnet)
+                        index += 1
+    for assignment in network_assignments:
+        network = assignment["network"]
+        num_hosts = assignment["num_hosts"]
+        print(f"allocated network {network} for {num_hosts} hosts.")
 if __name__ == "__main__":
     main()
 
