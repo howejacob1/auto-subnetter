@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 import ipaddress
+import os
 from math import floor, ceil, log, log2
 BITS_IN_IP = 32
 
 def main():
-    ip_raw = input("Enter in the provided IP range. Example: 192.168.0.0/24: ")
+    print("")
+    print("Enter in the provided IP range. Example: 192.168.0.0/24")
+    ip_raw = input("> ")
     ip = ipaddress.ip_network(ip_raw)
     
     print("Enter in a list containing numbers of hosts.")
@@ -23,21 +26,18 @@ def main():
 
     # now we need to convert an IP to a list of bytes, then add 
     # read one integer at a time until a non-integer is encountered. Then, end this integer, add it to the list
-    print(num_hosts_list)
     unallocated_networks = [ip]
     network_assignments = []
     for num_hosts in num_hosts_list:
         num_required_ips = num_hosts + 2 # broadcast * network addresses
         subnet_bits_required = ceil(log2(num_required_ips))
         network_bits = 32 - subnet_bits_required
-        print(f"{num_hosts} hosts needs {subnet_bits_required} subnet bits or /{network_bits}")
         # now find closest subnet
         # find highest one that can fit
         network_found = False
         best_network = None
         while not network_found:
             for network in unallocated_networks:
-                print(f"currently working on network {network} and is type {type(network)}")
                 if network.prefixlen == network_bits:
                     network_assignments.append({"num_hosts": num_hosts, "network": network})
                     unallocated_networks.remove(network)
@@ -61,9 +61,14 @@ def main():
     for assignment in network_assignments:
         network = assignment["network"]
         num_hosts = assignment["num_hosts"]
-        print(f"allocated network {network} for {num_hosts} hosts.")
+        print(f"Allocated network {network} for {num_hosts} hosts.")
+    for network in unallocated_networks:
+        print(f"Did not use network {network}.")
+
 if __name__ == "__main__":
     main()
+    if os.name == "nt":
+        input("Press enter to exit.")
 
 # For those of you who is working on the 4 bonuspoint subnet design program (Python)
 # If you are working on this program, please make sure you implement the following regarding input of parameters.
