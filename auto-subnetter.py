@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import ipaddress
+from ipaddress import IPv4Address
 import os
 from math import floor, ceil, log, log2
 BITS_IN_IP = 32
+
 
 def main():
     print("")
@@ -61,7 +63,20 @@ def main():
     for assignment in network_assignments:
         network = assignment["network"]
         num_hosts = assignment["num_hosts"]
+        host_bits = 32-network.prefixlen
+        first_ip_in_network = IPv4Address(network.network_address)
+
         print(f"Allocated network {network} for {num_hosts} hosts.")
+        print(f"    Subnet mask: {network.netmask}")
+        print(f"    Broadcast address: {network.broadcast_address}")
+        print(f"    Number of IP addresses: {network.num_addresses}")
+        print(f"    Host bits: {host_bits}")
+        print(f"    First IP in network (invalid, reserved for network): {first_ip_in_network}")
+        print(f"    First host IP in network: {first_ip_in_network + 1}")
+        print(f"    Last host IP: {first_ip_in_network+network.num_addresses-2}")
+        print(f"    Last IP: {first_ip_in_network+network.num_addresses-1}")
+        print(f"    First IP of next network: {first_ip_in_network+network.num_addresses}")
+        
     for network in unallocated_networks:
         print(f"Did not use network {network}.")
 
